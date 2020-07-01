@@ -23,7 +23,7 @@ def load_main_menu():
                     control_value = 1
             if control_value == 1:
                 return user_input
-            break
+            print("Uneliste neispravnu putanju, pokusajte ponovo")
         else:
             print("Uneliste neispravnu putanju, pokusajte ponovo")
 
