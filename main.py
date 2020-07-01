@@ -3,6 +3,7 @@ import os
 
 from modul.parser import Parser
 from modul.graph import Graph
+from modul.trie import Trie
 
 
 def load_main_menu():
@@ -27,10 +28,21 @@ def load_main_menu():
         else:
             print("Uneliste neispravnu putanju, pokusajte ponovo")
 
+#Funkcija obliazi zadati direktorijum u dubinu i dodaje sve reci u stablo, i za svaku rece vezuje putanju ka datom fajlu 
+def look_file_walker(path, trie):
+    for root_dir, dir_name, file_names in os.walk(path):
+        for file_name in file_names:
+            if file_name.endswith('.html'):
+                file_path = os.path.join(root_dir,file_name)
+                links, words = parser.parse(file_path)
+                for word in enumerate(words):
+                    trie.insert(word,file_path)
+    print("Stablo indeksirano")
 
 if __name__ == "__main__":
     parser = Parser()
-    graph = Graph(True)
+    graph = Graph()
+    trie = Trie()
 
     #NOTE putanja ka folderu  pretragu, po defoltu napravljena za rad na test skupu 
     root_dir_path = os.getcwd() + os.path.sep + "test_skup" + os.path.sep + "python-2.7.7-docs-html"
@@ -39,4 +51,5 @@ if __name__ == "__main__":
     if user_input != 'TEST':
         root_dir_path = user_input
         
-    print(root_dir_path)
+    print("Molimo sacekajte stablo se indeksira")
+    look_file_walker(root_dir_path, trie)
