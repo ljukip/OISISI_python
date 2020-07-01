@@ -1,9 +1,17 @@
 class TrieNode:
-    def __init__(self, ch , paths):
+    def __init__(self, ch , paths = []):
         self.char = ch
         self.children = {}
-        self.paths = []
+        self.paths = paths
         self.end = False
+
+    def get_child(self, char):
+        return_value = None
+        for child in self.children:
+            if child.char.lower() == char.lower():
+                return_value = child
+                break
+        return return_value
 
 class Trie:
 
@@ -17,9 +25,12 @@ class Trie:
 
         parent = self.root
         for i, char in enumerate (word):
-            if char in parent.children:
-                parent.children[char] = TrieNode(char)
-            parent = parent.children[char]
+            if parent.get_child(char) is not None:
+                parent = parent.get_child(char)
+            else:
+                new_node = Trie(char, [])
+                parent.children.append(new_node)
+                parent = new_node
             if i == len(word)-1:
                 parent.end = True
                 parent.paths.append(path)
