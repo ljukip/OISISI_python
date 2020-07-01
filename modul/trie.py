@@ -1,14 +1,14 @@
 class TrieNode:
     def __init__(self, ch , paths = []):
         self.char = ch
-        self.children = {}
+        self.children = []
         self.paths = paths
         self.end = False
 
     def get_child(self, char):
         return_value = None
         for child in self.children:
-            if child.char.lower() == char.lower():
+            if child.char == char:
                 return_value = child
                 break
         return return_value
@@ -28,7 +28,7 @@ class Trie:
             if parent.get_child(char) is not None:
                 parent = parent.get_child(char)
             else:
-                new_node = Trie(char, [])
+                new_node = TrieNode(char, [])
                 parent.children.append(new_node)
                 parent = new_node
             if i == len(word)-1:
@@ -38,12 +38,11 @@ class Trie:
     def search(self, word):
 
         parent = self.root
-        for char in word:
-            if char not in parent.children:
-                return False
-            parent = parent.children[char]
-        if parent.end == True:
-            return parent.paths
+        for i, char in enumerate(word):
+           if parent.get_child(char) is not None:
+                parent = parent.get_child(char)
+                if i == len(word) - 1 and parent.end:
+                    return parent.paths
         return False
 
     
