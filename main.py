@@ -29,6 +29,23 @@ def load_main_menu():
 		else:
 			print("Greska pri unosu, pokusajte ponovo")
 
+def actions_view(trie):
+	run=True
+	while run:
+
+		print("################################################################################")
+		print("Unosom odgovarajuceg broja, odaberite jednu od sledecih akcija:")
+		print("1 - Pretraga reci")
+		print("2 - Promena broja stranica za prikaz")
+		print("0 - Izlaz")
+		print("################################################################################")
+		user_input_action = input(">>>>")
+		if user_input_action == "1":
+			querry = input("-Unesite rec koju trazite: ")
+		elif user_input_action == "0":
+			run = False
+		else:
+			print("----Pogresan unos, pokusajte ponovo----")
 
 #Funkcija obliazi zadati direktorijum u dubinu i dodaje sve reci u stablo, i za svaku rec vezuje putanju ka datom fajlu 
 def look_file_walker(path, trie):
@@ -58,5 +75,5 @@ if __name__ == "__main__":
 
 	print("Molimo sacekajte stablo se indeksira...")
 	look_file_walker(root_dir_path, trie)
-
+	actions_view(trie)
 
