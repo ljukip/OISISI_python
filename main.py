@@ -29,6 +29,20 @@ def load_main_menu():
 		else:
 			print("Greska pri unosu, pokusajte ponovo")
 
+def custom_set(resoult_array):
+	output_tmp = []
+	output_result = {}
+	i = 0
+	for x in resoult_array:
+
+		if x not in output_tmp:
+			output_tmp.append(x)
+			output_result[x] = 1
+		else:
+			output_result[x] += 1
+		i=i+1
+	return output_result
+
 def actions_view(trie):
 	run=True
 	while run:
@@ -42,6 +56,10 @@ def actions_view(trie):
 		user_input_action = input(">>>>")
 		if user_input_action == "1":
 			querry = input("-Unesite rec koju trazite: ")
+			search_result = trie.search(querry)
+			result = custom_set(search_result)
+			for key, value in sorted(result.items(), key=lambda item: item[1], reverse=True):
+				print("%s: -\t\t %s" % (value, key))
 		elif user_input_action == "0":
 			run = False
 		else:
