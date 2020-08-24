@@ -32,22 +32,21 @@ def load_main_menu():
 
 
 
-def actions_view(trie,set,graph):
+def actions_view(trie,set,graph,file_contet_size,paggination_offest,curent_page):
 	run=True
-	broj=6
 	while run:
 		print("#######################################Meni#####################################")
 		print("Unosom odgovarajuceg broja, odaberite jednu od sledecih akcija:")
 		print("--------------------------------------------------------------------------------")
 		print("1 - Pretraga reci")
-		print("2 - Promena broja stranica za prikaz (broj je %d)" %broj)
+		print("2 - Promena broja stranica za prikaz (broj je %d)" %paggination_offest)
 		print("0 - Izlaz")
 		print("################################################################################")
 		user_input_action = input(">>>>")
 		if user_input_action == "1":
 			query = input("-Unesite rec koju trazite: ")
 			if set.generate(trie,query) == True:
-				print_resoult(set.all_files, graph)
+				print_resoult(set.all_files, graph,file_contet_size,paggination_offest,curent_page)
 			else:
 				continue
 			#set.generate(trie,query)
@@ -67,33 +66,38 @@ def actions_view(trie,set,graph):
 					temp=int(input(">>>>"))
 				except ValueError:
 					print("Pogresan unos broja, pokusajte ponovo")
-				if broj<1:
+				if paggination_offest<1:
 					print("Broj premali! \t Minimalan broj stranica za prikaz je 1, pokusajte ponovo")
-				elif broj>40:
+				elif paggination_offest>40:
 					print("Broj prevelik! \t Maksimalan broj stranica za prikaz je 40, pokusajte ponovo")
 				else:
-					broj=temp
+					paggination_offest=temp
 					#za prvih broj rangova
 					print_resoult(set.all_files)
 					runNum=False
 					print("#######################################Meni#####################################")
 					print("Unosom odgovarajuceg broja, odaberite jednu od sledecih akcija:")
 					print("--------------------------------------------------------------------------------")
-					print("1 - prethodne %d stranice" %broj)
-					print("2 - sledece %d stranice" % broj)
-					print("3 - nazad na glavni meni")
+					if curent_page !=0 :
+						print("1 - Prethodna stranica" )
+					print ("Trenutna stanica: %d" %curent_page)
+					print("2 - Sledeca stranica" )
+					print("3 - Nazad na glavni meni")
 					print("0 - Izlaz")
 					print("################################################################################")
 					user_input_action2 = input(">>>>")
 					if user_input_action2 == "3":
 						user_input_action==1
 						continue
-					elif user_input_action2 == "2":
-						# za od trenutni-broj do trenutni-1
-						print_resoult(set.all_files)
 					elif user_input_action2 == "1":
+						# za od trenutni-broj do trenutni-1
+						if curent_page > 1 :
+							curent_page -=1
+						print_resoult(set.all_files, graph,file_contet_size,paggination_offest,curent_page)
+					elif user_input_action2 == "2":
+						curent_page += 1
 						# za trenutni+broj+1 rangova
-						print_resoult(set.all_files)
+						print_resoult(set.all_files, graph,file_contet_size,paggination_offest,curent_page)
 					elif user_input_action2 == "0":
 						runNum = False
 					else:
@@ -106,30 +110,40 @@ def actions_view(trie,set,graph):
 			print("----Pogresan unos, pokusajte ponovo----")
 
 #Funkcija obliazi zadati direktorijum u dubinu i dodaje sve reci u stablo, i za svaku rec vezuje putanju ka datom fajlu 
-def look_file_walker(path, trie,raw_graph):
+def look_file_walker(path, trie,raw_graph,file_contet_size):
 	start_time = time.time()
 	for root_dir, dir_name, file_names in os.walk(path):
 		for file_name in file_names:
 			if file_name.endswith('.html'):
 				file_path = os.path.join(root_dir,file_name)
 				links, words = parser.parse(file_path)
+				file_contet_size[file_path] = len(words)
 				raw_graph[file_path] = links
 				for i,word in enumerate(words):
 					trie.insert(word,file_path)
 	end_time = time.time()
-	print("Stablo je indeksirano, vreme indeksiranja " + str(round(end_time - start_time, 2)) + "s")
+	print("Stablo i graf su indeksirani, vreme indeksiranja " + str(round(end_time - start_time, 2)) + "s")
 
-def print_resoult( result,graph ):
+def print_resoult( result,graph,file_contet_size,paggination_offest,curent_page ):
+	finale_result = {}
+	sort_rang = []
 	for prime_key in result.keys():
-		print(prime_key)
-		for key in result[prime_key].keys():
-			print(graph.vertex_degree(key))
-			print("%s: -\t\t %s" % (result[prime_key][key], key))
+
+		if type(result[prime_key]) is dict:
+			for key in result[prime_key].keys():
+				rang = round(result[prime_key][key]/file_contet_size[key]*graph.vertex_degree(key), 10)
+				finale_result[key] = rang
+			sort_rang = sorted(finale_result.items(), key=lambda x: x[1], reverse=True)
+		for i in sort_rang:
+			print("RANG %s: -\t\t %s" % (i[1], i[0]))
+
 if __name__ == "__main__":
 	parser = Parser()
 	trie = Trie()
 	set = Set()
 	raw_graph = {}
+	#file_contet_size sadrzi listu svih linkova i koliko parsiranih reci sadrzi
+	file_contet_size = {}
 
 	curent_page = 0
 	paggination_offest = 10
@@ -141,8 +155,8 @@ if __name__ == "__main__":
 	if user_input != 'TEST':
 		root_dir_path = user_input
 
-	print("Molimo sacekajte stablo se indeksira...")
-	look_file_walker(root_dir_path, trie,raw_graph)
+	print("Molimo sacekajte stablo i graf se indeksiraju...")
+	look_file_walker(root_dir_path, trie,raw_graph, file_contet_size)
 	graph = Graph(raw_graph)
-	actions_view(trie,set,graph)
+	actions_view(trie,set,graph,file_contet_size,paggination_offest,curent_page)
 
