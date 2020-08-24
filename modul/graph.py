@@ -1,125 +1,69 @@
-class Graph:
-    def __init__(self, directed=False):
-        self._vertices = {}
-        self._outgoing = {}
-        self._incoming = {} if directed else self._outgoing
+class Graph(object):
 
-    def _validate_vertex(self, v):
-        if not isinstance(v, self.Vertex):
-            raise TypeError('Vertex expected')
-        if v not in self._outgoing:
-            raise ValueError('Vertex does not belong to this graph.')
-
-    def is_directed(self):
-        return self._incoming is not self._outgoing
-
-    def vertex_count(self):
-        return len(self._outgoing)
+    def __init__(self, graph_dict=None):
+        """ initializes a graph object
+            If no dictionary or None is given,
+            an empty dictionary will be used
+        """
+        if graph_dict == None:
+            graph_dict = {}
+        self.__graph_dict = graph_dict
 
     def vertices(self):
-        return self._outgoing.keys()
-
-    def edge_count(self):
-        total = sum(len(self._outgoing[v]) for v in self._outgoing)
-        return total if self.is_directed() else total // 2
+        """ returns the vertices of a graph """
+        return list(self.__graph_dict.keys())
 
     def edges(self):
-        result = set()
-        for secondary_map in self._outgoing.values():
-            result.update(secondary_map.values())
-        return result
+        """ returns the edges of a graph """
+        return self.__generate_edges()
 
-    def get_edge(self, u, v):
-        self._validate_vertex(u)
-        self._validate_vertex(v)
-        return self._outgoing[u].get(v)
+    def add_vertex(self, vertex):
+        """ If the vertex "vertex" is not in
+            self.__graph_dict, a key "vertex" with an empty
+            list as a value is added to the dictionary.
+            Otherwise nothing has to be done.
+        """
+        if vertex not in self.__graph_dict:
+            self.__graph_dict[vertex] = []
 
-    def get_edges(self, v):
-        self._validate_vertex(v)
-        return self._outgoing[v], self._incoming[v]
+    def add_edge(self, edge):
+        """ assumes that edge is of type set, tuple or list;
+            between two vertices can be multiple edges!
+        """
+        edge = set(edge)
+        (vertex1, vertex2) = tuple(edge)
+        if vertex1 in self.__graph_dict:
+            self.__graph_dict[vertex1].append(vertex2)
+        else:
+            self.__graph_dict[vertex1] = [vertex2]
 
-    def get_incomning(self, v):
-        self._validate_vertex(v)
-        return self._incoming[v]
+    def __generate_edges(self):
+        """ A static method generating the edges of the
+            graph "graph". Edges are represented as sets
+            with one (a loop back to the vertex) or two
+            vertices
+        """
+        edges = []
+        for vertex in self.__graph_dict:
+            for neighbour in self.__graph_dict[vertex]:
+                if {neighbour, vertex} not in edges:
+                    edges.append({vertex, neighbour})
+        return edges
 
-    def degree(self, v, outgoing=True):
-        self._validate_vertex(v)
-        adj = self._outgoing if outgoing else self._incoming
-        return len(adj[v])
+    def __str__(self):
+        res = "vertices: "
+        for k in self.__graph_dict:
+            res += str(k) + " "
+        res += "\nedges: "
+        for edge in self.__generate_edges():
+            res += str(edge) + " "
+        return res
 
-    def incident_edges(self, v, outgoing=True):
-        self._validate_vertex(v)
-        adj = self._outgoing if outgoing else self._incoming
-        for edge in adj[v].values():
-            yield edge
-
-    def insert_vertex(self, x=None):
-        v = self.Vertex(x)
-
-        self._outgoing[v] = {}
-        if self.is_directed():
-            self._incoming[v] = {}  # need distinct map for incoming edges
-        self._vertices[x] = v
-        return v
-
-    def insert_edge(self, u, v, x=None):
-        if v is None or u is None:
-            return
-
-        if self.get_edge(u, v) is not None:  # includes error checking
-            raise ValueError('u and v are already adjacent')
-
-        e = self.Edge(u, v, x)
-        self._outgoing[u][v] = e
-        self._incoming[v][u] = e
-
-    def get_vertex(self, link):
-        if link not in self._vertices.keys():
-            return None
-        return self._vertices[link]
-
-    class Vertex:
-        """Lightweight vertex structure for a graph."""
-        __slots__ = '_element'
-
-        def __init__(self, x):
-            """Do not call constructor directly.
-                Use Graph's insert_vertex(x).
-                """
-            self._element = x
-
-        def element(self):
-            """Return element associated with this vertex."""
-            return self._element
-
-        def __hash__(self):  # will allow vertex to be a map/set key
-            return hash(id(self))
-
-        def __str__(self):
-            return str(self._element)
-
-    class Edge:
-        __slots__ = '_origin', '_destination', '_elements'
-
-        def __init__(self, u, v, x):
-            self._origin = u
-            self._destination = v
-            self._elements = x
-
-        def endpoints(self):
-            return (self._origin, self._destination)
-
-        def opposite(self, v):
-            if not isinstance(v, Graph, Vertex):
-                raise TypeError('v must be a Vertex')
-            return self._destination if v is self._origin else self._origin
-            raise ValueError('v not incident to edge')
-
-        def element(self):
-            return self._elements
-
-        def __hash__(self):
-            return hash((self._origin, self._destination))
-
-        def __str__(self):
-            return '({0},{1},{2}))'.format(self._origin, self._destination, self._elements)
+    def vertex_degree(self, vertex):
+        """ The degree of a vertex is the number of edges connecting
+            it, i.e. the number of adjacent vertices. Loops are counted
+            double, i.e. every occurence of vertex in the list
+            of adjacent vertices. """
+        adj_vertices = self.__graph_dict[vertex]
+        degree = len(adj_vertices) + adj_vertices.count(vertex)
+        return degree
